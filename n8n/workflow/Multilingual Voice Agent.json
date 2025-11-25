@@ -1,0 +1,338 @@
+{
+  "name": "Multilingual Voice Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "voice-agent",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        784,
+        64
+      ],
+      "id": "54a9035c-ae75-4dfb-bb2b-5ba93c63c735",
+      "name": "Webhook",
+      "webhookId": "70d48231-f866-40e8-b70b-cc3c79cd9265"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.text }}",
+        "options": {
+          "systemMessage": "You are a multilingual AI voice assistant and your name id Agent.  \nYour job is to clearly understand the user, detect the language automatically, and reply in the same language.  \nKeep your answers short, simple, and conversational.  \nIf the user asks something unclear, politely ask for clarification.  \nDo not mention that you are an AI model.  \nYou have access to Gmail tool to send emails\nYou have access to perplexity search module, to  find latest information and do local research"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        1264,
+        64
+      ],
+      "id": "ac270c36-d380-49d5-9230-457b68cc7a24",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "messages": {
+          "message": [
+            {
+              "content": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('message0_Text', ``, 'string') }}"
+            }
+          ]
+        },
+        "options": {},
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-base.perplexityTool",
+      "typeVersion": 1,
+      "position": [
+        1520,
+        288
+      ],
+      "id": "e917eade-840b-4d42-98f0-e46985760fc8",
+      "name": "Message a model in Perplexity",
+      "credentials": {
+        "perplexityApi": {
+          "id": "qhIzFPvYOsRyGRqI",
+          "name": "Perplexity account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "binary",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "X-AI-Response",
+                "value": "={{ $json.aiResponse }}"
+              },
+              {
+                "name": "Content-type",
+                "value": "={{ $('Convert text to speech').item.json['content-type'] }}"
+              },
+              {
+                "name": "Access-Control-Expose-Headers",
+                "value": "X-AI-Response"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        2064,
+        64
+      ],
+      "id": "d99c7c2f-d88f-4710-8bf9-966f06b4025b",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "resource": "speech",
+        "voice": {
+          "__rl": true,
+          "value": "kdVjFjOXaqExaDvXZECX",
+          "mode": "list",
+          "cachedResultName": "Burt"
+        },
+        "text": "={{ $json.output }}",
+        "additionalOptions": {},
+        "requestOptions": {}
+      },
+      "type": "@elevenlabs/n8n-nodes-elevenlabs.elevenLabs",
+      "typeVersion": 1,
+      "position": [
+        1616,
+        64
+      ],
+      "id": "69922ce3-0364-463a-ae86-07bc535eb907",
+      "name": "Convert text to speech",
+      "credentials": {
+        "elevenLabsApi": {
+          "id": "Cu0blhh16pu2GArU",
+          "name": "ElevenLabs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the AI response text\nconst aiText = $('AI Agent').first().json.output;\n\n// Get the current item with binary data\nconst currentItem = $input.first();\n\n// Return item with BOTH JSON and binary\nreturn {\n  json: {\n    aiResponse: aiText,\n    success: true\n  },\n  binary: currentItem.binary  // ✅ Use currentItem.binary instead of $binary\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1824,
+        64
+      ],
+      "id": "3e9fa600-e552-4812-82ee-83730b89b71b",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1136,
+        272
+      ],
+      "id": "a799fd58-c208-4e23-a079-d0c4057aad59",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "by2KI3xSBlJRlzUJ",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('To', ``, 'string') }}",
+        "subject": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Subject', ``, 'string') }}",
+        "message": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Message', ``, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.1,
+      "position": [
+        1360,
+        304
+      ],
+      "id": "0e4de17a-69dd-428e-8b08-90b0b9a6bcfa",
+      "name": "Send a message in Gmail",
+      "webhookId": "fc742907-c429-48fe-999e-ce93001b7024",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "piVrHf2HHnH3wmj9",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.transcription_id }}",
+        "contextWindowLength": 15
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        1232,
+        416
+      ],
+      "id": "8dad76cc-d5f9-4210-9033-c022515b5b43",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "resource": "speech",
+        "operation": "speechToText",
+        "file": "audio",
+        "additionalOptions": {},
+        "requestOptions": {}
+      },
+      "type": "@elevenlabs/n8n-nodes-elevenlabs.elevenLabs",
+      "typeVersion": 1,
+      "position": [
+        1024,
+        64
+      ],
+      "id": "3fdd80bd-73b9-48c7-8060-7450ff9209f0",
+      "name": "Transcribe audio or video",
+      "credentials": {
+        "elevenLabsApi": {
+          "id": "Cu0blhh16pu2GArU",
+          "name": "ElevenLabs account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Transcribe audio or video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model in Perplexity": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Convert text to speech",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert text to speech": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message in Gmail": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcribe audio or video": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "00a14ae8-9933-437b-99e2-372bd97f25ae",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2184d753c98df52387776d082951bbd293e14ef75faa8955d174a8778ceb8260"
+  },
+  "id": "cNqZmezHgy7geXHB",
+  "tags": [
+    {
+      "updatedAt": "2025-11-16T06:59:59.502Z",
+      "createdAt": "2025-11-16T06:59:59.502Z",
+      "id": "24OCJuOJKtFiXInn",
+      "name": "AgentWorkflow"
+    }
+  ]
+}

@@ -1,0 +1,143 @@
+{
+    "name": "Multilingual Voice Agent",
+    "nodes": [
+        {
+            "id": "httpTrigger",
+            "name": "HTTP Trigger",
+            "type": "n8n-nodes-base.httpTrigger",
+            "typeVersion": 1,
+            "position": [
+                240,
+                280
+            ],
+            "parameters": {
+                "path": "voice-agent",
+                "methods": [
+                    "POST"
+                ]
+            }
+        },
+        {
+            "id": "sttNode",
+            "name": "Speech-to-Text (Add Your Provider)",
+            "type": "n8n-nodes-base.function",
+            "typeVersion": 1,
+            "position": [
+                520,
+                280
+            ],
+            "parameters": {
+                "functionCode": "/*\n  PLACEHOLDER\n  Convert incoming audio file → text here.\n\n  Replace this node with:\n  - OpenAI Whisper Node\n  - Deepgram Node\n  - AssemblyAI Node\n  - Google Speech-to-Text Node\n\n  Expected Output:\n  {\n    \"text\": \"User message here\"\n  }\n*/\n\nreturn items;"
+            }
+        },
+        {
+            "id": "languageDetect",
+            "name": "Language Detection (LLM Placeholder)",
+            "type": "n8n-nodes-base.function",
+            "typeVersion": 1,
+            "position": [
+                780,
+                280
+            ],
+            "parameters": {
+                "functionCode": "/*\n  PLACEHOLDER\n  Add your preferred LLM node here (OpenAI, Groq, etc.)\n  Input: items[0].json.text\n\n  Your LLM prompt:\n  \"Detect the language of this text and return only the language code (e.g., en, hi, es, fr).\"\n\n  Expected Output:\n  {\n    \"detectedLanguage\": \"en\",\n    \"text\": original text\n  }\n*/\n\nreturn items;"
+            }
+        },
+        {
+            "id": "aiBrain",
+            "name": "AI Brain (Chat Response)",
+            "type": "n8n-nodes-base.function",
+            "typeVersion": 1,
+            "position": [
+                1040,
+                280
+            ],
+            "parameters": {
+                "functionCode": "/*\n  PLACEHOLDER\n  Add your LLM Chat Completion node here.\n\n  Prompt Example:\n  \"You are a multilingual voice assistant. Respond in the same language as the user's detectedLanguage.\"\n\n  Expected Output:\n  {\n    \"replyText\": \"Your AI-generated response\"\n  }\n*/\n\nreturn items;"
+            }
+        },
+        {
+            "id": "ttsNode",
+            "name": "Text-to-Speech (Add Your Provider)",
+            "type": "n8n-nodes-base.function",
+            "typeVersion": 1,
+            "position": [
+                1320,
+                280
+            ],
+            "parameters": {
+                "functionCode": "/*\n  PLACEHOLDER\n  Convert replyText → Base64 audio.\n\n  Replace with:\n  - OpenAI TTS\n  - Google TTS\n  - ElevenLabs\n\n  Expected Output:\n  {\n    \"audioBase64\": \"...\",\n    \"replyText\": \"...\",\n    \"lang\": detectedLanguage\n  }\n*/\n\nreturn items;"
+            }
+        },
+        {
+            "id": "responseNode",
+            "name": "HTTP Response",
+            "type": "n8n-nodes-base.httpResponse",
+            "typeVersion": 1,
+            "position": [
+                1600,
+                280
+            ],
+            "parameters": {
+                "responseBody": "={{ { \"replyText\": $json.replyText, \"replyAudioBase64\": $json.audioBase64, \"language\": $json.lang } }}"
+            }
+        }
+    ],
+    "connections": {
+        "httpTrigger": {
+            "main": [
+                [
+                    {
+                        "node": "sttNode",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "sttNode": {
+            "main": [
+                [
+                    {
+                        "node": "languageDetect",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "languageDetect": {
+            "main": [
+                [
+                    {
+                        "node": "aiBrain",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "aiBrain": {
+            "main": [
+                [
+                    {
+                        "node": "ttsNode",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "ttsNode": {
+            "main": [
+                [
+                    {
+                        "node": "responseNode",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}
